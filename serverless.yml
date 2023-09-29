@@ -1,0 +1,258 @@
+service: rally
+
+useDotenv: true
+
+provider:
+  name: aws
+  region: ${self:custom.region}
+  runtime: python3.10
+  stage: v1
+  httpApi:
+    cors: true
+    authorizers:
+      apiAuthorizer:
+        type: jwt
+        identitySource: $request.header.Authorization
+        issuerUrl:
+          Fn::Join:
+            - ""
+            - - "https://cognito-idp."
+              - "${self:provider.region}"
+              - ".amazonaws.com/"
+              - Ref: CognitoUserPool
+        audience:
+          - Ref: CognitoUserPoolClient
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+            - events:*
+            - cloudwatch:* # comment out this line to disable logging
+            - cognito-idp:*
+          Resource: "*"
+        - Effect: Allow
+          Action:
+            - "s3:PutObject"
+            - "s3:PutObjectAcl"
+            - "s3:GetObject"
+            - "s3:GetObjectAcl"
+            - "s3:DeleteObject"
+            - "s3:ListBucket"
+          Resource:
+            - "arn:aws:s3:::${self:custom.bucket}"
+            - "arn:aws:s3:::${self:custom.bucket}/*"
+
+functions:
+  api:
+    name: ${sls:stage}-http-api-handler
+    handler: lambdas/http-api.main
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    environment:
+      SLS_STAGE: ${sls:stage}
+      BUCKET:
+        Ref: S3
+      RALLY_TBL:
+        Ref: RallyTable
+      VEHICLE_TBL:
+        Ref: VehiclesTable
+      # STRIPE_API_KEY: ${env:STRIPE_API_KEY}
+      COGNITO_POOL_ID:
+        Ref: CognitoUserPool
+      APP_CLIENT_ID:
+        Ref: CognitoAuthorizedRole
+      IDENTITY_POOL_ID:
+        Ref: IdentityPool
+    package:
+      patterns:
+        - "!lambdas/**"
+        - "lambdas/http-api.py"
+    events:
+      - httpApi:
+          method: GET
+          path: "/${sls:stage}/ping"
+          # authorizer:
+          #     name: apiAuthorizer
+
+resources:
+  Resources:
+    S3:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucket}
+        AccessControl: Private
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          BlockPublicPolicy: false
+          IgnorePublicAcls: false
+          RestrictPublicBuckets: false
+        OwnershipControls:
+          Rules:
+            - ObjectOwnership: ObjectWriter
+    RallyTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: rally-${sls:stage}
+        AttributeDefinitions:
+          - AttributeName: ralliId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ralliId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+    VehiclesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: vehicle-${sls:stage}
+        AttributeDefinitions:
+          - AttributeName: vehicleId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: vehicleId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 10
+          WriteCapacityUnits: 10
+
+    # -- COGNITO --
+    CognitoUserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: Rally-UserPool
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        VerificationMessageTemplate:
+          DefaultEmailOption: CONFIRM_WITH_CODE
+          EmailSubject: "Rally - Your Verification Code"
+          EmailMessage: "Your verification code is {####}"
+        AccountRecoverySetting:
+          RecoveryMechanisms:
+            - Name: verified_email
+              Priority: 1
+        UserAttributeUpdateSettings:
+          AttributesRequireVerificationBeforeUpdate:
+            - email
+        EmailConfiguration:
+          EmailSendingAccount: DEVELOPER
+          SourceArn: ${self:custom.emailDomainArn}
+          From: "Rally <landoncobb123@gmail.com>"
+          ReplyToEmailAddress: "landoncobb123@gmail.com"
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+          # - Name: custom:role
+          #   AttributeDataType: String
+          #   Mutable: true
+    CognitoUserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: Rally-UserPoolClient
+        UserPoolId: 
+          Ref: CognitoUserPool
+        ExplicitAuthFlows:
+          - ALLOW_REFRESH_TOKEN_AUTH
+          - ALLOW_USER_SRP_AUTH
+        GenerateSecret: false
+        PreventUserExistenceErrors: ENABLED
+    IdentityPool:
+      Type: AWS::Cognito::IdentityPool
+      Properties:
+        IdentityPoolName: Rally-IdentityPool
+        AllowUnauthenticatedIdentities: false
+        CognitoIdentityProviders: 
+          - ClientId: 
+              Ref: CognitoUserPoolClient
+            ProviderName:
+              "Fn::GetAtt": [ CognitoUserPool, ProviderName ]
+    CognitoAuthorizedRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Principal: 
+                Federated: "cognito-identity.amazonaws.com"
+              Action: 
+                - "sts:AssumeRoleWithWebIdentity"
+              Condition:
+                StringEquals: 
+                  "cognito-identity.amazonaws.com:aud":
+                    Ref: IdentityPool
+                "ForAnyValue:StringLike":
+                  "cognito-identity.amazonaws.com:amr": authenticated
+        Policies:
+          - PolicyName: Rally-IdentityPoolAuthenticated
+            PolicyDocument: 
+              Version: "2012-10-17"
+              Statement: 
+                - Effect: "Allow"
+                  Action:
+                    - "cognito-identity:GetCredentialsForIdentity"
+                  Resource: "*"
+                - Effect: "Allow"
+                  Action:
+                    - "lambda:InvokeFunction"
+                  Resource: "*"
+    IdentityPoolRoleMapping:
+      Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+      Properties:
+        IdentityPoolId: 
+          Ref: IdentityPool
+        Roles:
+          authenticated:
+              "Fn::GetAtt": [ CognitoAuthorizedRole, Arn ]
+
+
+package:
+  excludeDevDependencies: false
+  individually: true
+  patterns:
+    - "!client/**"
+    - "!package.json"
+    - "!package-lock.json"
+    - "!poc.py"
+    - "!.env"
+    - "!yarn.lock"
+    - "!*.json"
+
+plugins:
+  - serverless-python-requirements
+  - serverless-dotenv-plugin
+  - serverless-plugin-common-excludes
+  - serverless-plugin-include-dependencies
+
+custom:
+  region: us-east-1
+  bucket: ${env:S3_BUCKET}
+  emailDomainArn: ${env:SES_EMAIL_ARN}
+  pythonRequirements:
+    slim: true
+    strip: false
+    dockerizePip: true
+    layer:
+      name: requirements-layer
+      description: "Layer that contains python function requirements"
+      compatibleRuntimes:
+        - python3.10
+      package:
+        exclude:
+          - "*/boto3/examples/*"
+  includeDependencies:
+    enableCaching: true
+  cors:
+    origin: "*"
+    headers:
+      - Content-Type
+      - X-Amz-Date
+      - Authorization
+      - X-Api-Key
+      - X-Amz-Security-Token
+      - X-Amz-User-Agent

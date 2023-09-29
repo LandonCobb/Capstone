@@ -1,0 +1,5 @@
+.env 
+poc.py
+node_modules
+.serverless
+client/build
