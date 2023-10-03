@@ -73,8 +73,43 @@ functions:
       - httpApi:
           method: GET
           path: "/${sls:stage}/ping"
-          # authorizer:
-          #     name: apiAuthorizer
+      - httpApi:
+          method: GET
+          path: "/${sls:stage}/rally"
+      - httpApi:
+          method: GET
+          path: "/${sls:stage}/rally/{rallyId}"
+      - httpApi:
+          method: POST
+          path: "/${sls:stage}/rally"
+          authorizer:
+            name: apiAuthorizer
+      - httpApi:
+          method: DELETE
+          path: "/${sls:stage}/rally/{rallyId}"
+          authorizer:
+            name: apiAuthorizer
+
+  post-signup:
+    name: ${sls:stage}-post-signup
+    handler: lambdas/post-signup.main
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    environment:
+      SLS_STAGE: ${sls:stage}
+      COGNITO_REGION: ${self:custom.region}
+    package:
+      patterns:
+        - "!lambdas/**"
+        - "lambdas/post-signup.py"
+    events:
+      - cognitoUserPool:
+        pool:
+          Ref: CognitoUserPool
+        trigger: PostConfirmation
+        existing: true
+        forceDeploy: true
+
 
 resources:
   Resources:
@@ -147,14 +182,14 @@ resources:
           - Name: email
             Required: true
             Mutable: true
-          # - Name: custom:role
-          #   AttributeDataType: String
-          #   Mutable: true
+          - Name: custom:rallyIds
+            AttributeDataType: String
+            Mutable: true
     CognitoUserPoolClient:
       Type: AWS::Cognito::UserPoolClient
       Properties:
         ClientName: Rally-UserPoolClient
-        UserPoolId: 
+        UserPoolId:
           Ref: CognitoUserPool
         ExplicitAuthFlows:
           - ALLOW_REFRESH_TOKEN_AUTH
@@ -166,11 +201,11 @@ resources:
       Properties:
         IdentityPoolName: Rally-IdentityPool
         AllowUnauthenticatedIdentities: false
-        CognitoIdentityProviders: 
-          - ClientId: 
+        CognitoIdentityProviders:
+          - ClientId:
               Ref: CognitoUserPoolClient
             ProviderName:
-              "Fn::GetAtt": [ CognitoUserPool, ProviderName ]
+              "Fn::GetAtt": [CognitoUserPool, ProviderName]
     CognitoAuthorizedRole:
       Type: AWS::IAM::Role
       Properties:
@@ -178,21 +213,21 @@ resources:
           Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Principal: 
+              Principal:
                 Federated: "cognito-identity.amazonaws.com"
-              Action: 
+              Action:
                 - "sts:AssumeRoleWithWebIdentity"
               Condition:
-                StringEquals: 
+                StringEquals:
                   "cognito-identity.amazonaws.com:aud":
                     Ref: IdentityPool
                 "ForAnyValue:StringLike":
                   "cognito-identity.amazonaws.com:amr": authenticated
         Policies:
           - PolicyName: Rally-IdentityPoolAuthenticated
-            PolicyDocument: 
+            PolicyDocument:
               Version: "2012-10-17"
-              Statement: 
+              Statement:
                 - Effect: "Allow"
                   Action:
                     - "cognito-identity:GetCredentialsForIdentity"
@@ -204,20 +239,17 @@ resources:
     IdentityPoolRoleMapping:
       Type: "AWS::Cognito::IdentityPoolRoleAttachment"
       Properties:
-        IdentityPoolId: 
+        IdentityPoolId:
           Ref: IdentityPool
         Roles:
           authenticated:
-              "Fn::GetAtt": [ CognitoAuthorizedRole, Arn ]
-
+            "Fn::GetAtt": [CognitoAuthorizedRole, Arn]
 
 package:
   excludeDevDependencies: false
   individually: true
   patterns:
     - "!client/**"
-    - "!package.json"
-    - "!package-lock.json"
     - "!poc.py"
     - "!.env"
     - "!yarn.lock"
