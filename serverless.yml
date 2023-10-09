@@ -89,6 +89,12 @@ functions:
           path: "/${sls:stage}/rally/{rallyId}"
           authorizer:
             name: apiAuthorizer
+      - httpApi:
+          method: GET
+          path: "/${sls:stage}/rally/{rallyName}"
+      - httpApi:
+          method: GET
+          path: "/${sls:stage}/rally/{rallyLocation}"
 
   post-signup:
     name: ${sls:stage}-post-signup
