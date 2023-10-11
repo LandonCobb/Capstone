@@ -91,10 +91,16 @@ functions:
             name: apiAuthorizer
       - httpApi:
           method: GET
-          path: "/${sls:stage}/rally/{rallyName}"
+          path: "/${sls:stage}/vehicle"
       - httpApi:
           method: GET
-          path: "/${sls:stage}/rally/{rallyLocation}"
+          path: "/${sls:stage}/vehicle/{vehicleId}"
+      - httpApi:
+          method: POST
+          path: "/${sls:stage}/vehicle"
+      - httpApi:
+          method: DELETE
+          path: "/${sls:stage}/vehicle/{vehicleId}"
 
   post-signup:
     name: ${sls:stage}-post-signup
@@ -115,7 +121,6 @@ functions:
         trigger: PostConfirmation
         existing: true
         forceDeploy: true
-
 
 resources:
   Resources:

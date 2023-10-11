@@ -97,8 +97,10 @@ class LambdaCTX:
 def ping() -> dict:
     return LambdaCTX.send_data(200, {'message': 'pong'})
 
-
-def get_rallies() -> dict:
+# /v1/rally?rallyName=test&rallyLoaction=Salt%20Lake
+def get_rallies(ctx: LambdaCTX) -> dict:
+    search_name = ctx.query.get('rallyName', None)
+    search_loaction = ctx.query.get('rallyLocation', None)
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
     response = rally_tbl.scan()
     rallies = response.get('Items', [])
@@ -106,7 +108,11 @@ def get_rallies() -> dict:
         response = rally_tbl.scan(
             ExclusiveStartKey=response['LastEvaluatedKey'])
         rallies.extend(response.get('Items', []))
-    return LambdaCTX.send_data(200, response)
+
+    # If search vars are not none then filter `rallies` var before return
+    if search_name is not None: rallies = [ rally for rally in rallies if search_name.lower() in rally['name'].lower() ]
+    if search_loaction is not None: rallies = [ rally for rally in rallies if search_loaction.lower() in rally['location'].lower() ]
+    return LambdaCTX.send_data(200, rallies)
 
 
 def get_rally_by_id(rally_id: str) -> dict:
@@ -133,6 +139,39 @@ def delete_rally_by_id(rally_id: str) -> dict:
     rally_tbl.delete_item(Key={'rallyId': rally_id})
     return LambdaCTX.send_data(204, {})
 
+def get_vehicles(ctx: LambdaCTX) -> dict:
+    vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
+    response = vehicle_tbl.scan()
+    vehicles = response.get('Items', [])
+    while 'LastEvaluatedKey' in response:
+        response = vehicle_tbl.scan(
+            ExclusiveStartKey=response['LastEvaluatedKey'])
+        vehicles.extend(response.get('Items', []))
+    return LambdaCTX.send_data(200, vehicles)
+
+def get_vehicle_by_id(vehicle_id: str) -> dict:
+    vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
+    vehicle = vehicle_tbl.get_item(Key={'vehicleId': vehicle_id}).get('Item', None)
+    if vehicle is None:
+        return LambdaCTX.send_error(404, 'Vehicle not found')
+    return LambdaCTX.send_data(200, vehicle)
+
+def create_vehicle(body: dict, user_id: str, ctx: LambdaCTX) -> dict:
+    vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
+    body['vehicleId'] = str(uuid.uuid4())
+    vehicle_tbl.put_item(Item=body)
+    # ASK CARTER
+    # rally_ids = LambdaCTX.get_user_attribute(ctx.get_user(user_id), 'custom:rallyIds')
+    # rally_ids = json.loads(rally_ids if rally_ids != "" else "[]")
+    # data = [ { 'Name': 'custom:rallyIds', 'Value': json.dumps([*rally_ids, body['rallyId']], separators=(',', ':')) } ]
+    # LambdaCTX.set_user_attributes(data, user_id)
+    return LambdaCTX.send_data(200, body)
+
+def delete_vehicle_by_id(vehicle_id: str) -> dict:
+    vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
+    vehicle_tbl.delete_item(Key={'vehicleId': vehicle_id})
+    return LambdaCTX.send_data(204, {})
+
 def main(event, l_context):
     try:
         ctx = LambdaCTX(event)
@@ -140,7 +179,7 @@ def main(event, l_context):
         if ctx.route_is(HttpMethod.GET, '/ping'):
             return ping()
         elif ctx.route_is(HttpMethod.GET, '/rally'):
-            return get_rallies()
+            return get_rallies(ctx)
         elif ctx.route_is(HttpMethod.GET, '/rally/{rallyId}'):
             rally_id = ctx.path.get('rallyId', None)
             if rally_id is None:
@@ -164,6 +203,19 @@ def main(event, l_context):
             if rally_id not in rally_ids:
                 return LambdaCTX.send_error(403, "You do not own this rally")
             return delete_rally_by_id(rally_id)
+        elif ctx.route_is(HttpMethod.GET, '/vehicle'):
+            return get_vehicles(ctx)
+        elif ctx.route_is(HttpMethod.GET, '/vehicle/{vehicleId}'):
+            vehicle_id = ctx.path.get('vehicleId', None)
+            if vehicle_id is None:
+                return LambdaCTX.send_error(400, 'Missing data')
+            return get_vehicle_by_id(vehicle_id)
+        elif ctx.route_is(HttpMethod.POST, '/vehicle'):
+            #ask carter
+            pass
+        elif ctx.route_is(HttpMethod.DELETE, '/vehicle/{vehicleId}'):
+            #ask farter
+            pass
 
         else:
             LambdaCTX.send_error(404, 'Not found')
