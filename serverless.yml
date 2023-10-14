@@ -58,7 +58,8 @@ functions:
         Ref: RallyTable
       VEHICLE_TBL:
         Ref: VehiclesTable
-      # STRIPE_API_KEY: ${env:STRIPE_API_KEY}
+      STRIPE_API_KEY: ${env:STRIPE_API_KEY}
+      STRIPE_WH_SK: ${env:STRIPE_WH_SK}
       COGNITO_POOL_ID:
         Ref: CognitoUserPool
       APP_CLIENT_ID:
@@ -98,9 +99,19 @@ functions:
       - httpApi:
           method: POST
           path: "/${sls:stage}/vehicle"
+          authorizer:
+            name: apiAuthorizer
       - httpApi:
           method: DELETE
           path: "/${sls:stage}/vehicle/{vehicleId}"
+          authorizer:
+            name: apiAuthorizer
+      - httpApi:
+          method: POST
+          path: "/${sls:stage}/checkout"
+      - httpApi:
+          method: POST
+          path: "/${sls:stage}/stripe/webhook"
 
   post-signup:
     name: ${sls:stage}-post-signup
@@ -193,7 +204,10 @@ resources:
           - Name: email
             Required: true
             Mutable: true
-          - Name: custom:rallyIds
+          - Name: rallyIds
+            AttributeDataType: String
+            Mutable: true
+          - Name: vehicleIds
             AttributeDataType: String
             Mutable: true
     CognitoUserPoolClient:

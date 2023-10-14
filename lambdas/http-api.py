@@ -5,11 +5,12 @@ import enum
 import logging
 import boto3
 import uuid
+import stripe, typing, sys
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# stripe.api_key = os.getenv('STRIPE_API_KEY')
+stripe.api_key = os.getenv('STRIPE_API_KEY')
 
 
 class HttpMethod(enum.Enum):
@@ -49,6 +50,16 @@ class LambdaCTX:
 
     def get_authorized_claims(self) -> dict:
         return self.event.get('requestContext', {}).get('authorizer', {}).get('jwt', {}).get('claims', {})
+
+    def validate_stripe_wh(self, webhook_sk) -> dict:
+        try:
+            return stripe.Webhook.construct_event(
+                self.raw_body, self.headers.get('stripe-signature'), webhook_sk
+            )
+        except ValueError as e:
+            return None
+        except stripe.error.SignatureVerificationError as e:
+            return None
 
     @classmethod
     def get_user(self, id: str) -> dict:
@@ -97,10 +108,13 @@ class LambdaCTX:
 def ping() -> dict:
     return LambdaCTX.send_data(200, {'message': 'pong'})
 
+
+
 # /v1/rally?rallyName=test&rallyLoaction=Salt%20Lake
 def get_rallies(ctx: LambdaCTX) -> dict:
     search_name = ctx.query.get('rallyName', None)
     search_loaction = ctx.query.get('rallyLocation', None)
+    search_by_ids = ctx.query.get('ids', None)
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
     response = rally_tbl.scan()
     rallies = response.get('Items', [])
@@ -112,6 +126,7 @@ def get_rallies(ctx: LambdaCTX) -> dict:
     # If search vars are not none then filter `rallies` var before return
     if search_name is not None: rallies = [ rally for rally in rallies if search_name.lower() in rally['name'].lower() ]
     if search_loaction is not None: rallies = [ rally for rally in rallies if search_loaction.lower() in rally['location'].lower() ]
+    if search_by_ids is not None: rallies = [rally for rally in rallies if rally['rallyId'] in json.loads(search_by_ids)]
     return LambdaCTX.send_data(200, rallies)
 
 
@@ -126,6 +141,8 @@ def get_rally_by_id(rally_id: str) -> dict:
 def create_rally(body: dict, user_id: str, ctx:LambdaCTX) -> dict:
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
     body['rallyId'] = str(uuid.uuid4())
+    if 'allotment' not in body: body['allotment'] = sys.maxsize
+    body['registrations'] = 0
     rally_tbl.put_item(Item=body)
     rally_ids = LambdaCTX.get_user_attribute(ctx.get_user(user_id), 'custom:rallyIds')
     rally_ids = json.loads(rally_ids if rally_ids != "" else "[]")
@@ -140,6 +157,7 @@ def delete_rally_by_id(rally_id: str) -> dict:
     return LambdaCTX.send_data(204, {})
 
 def get_vehicles(ctx: LambdaCTX) -> dict:
+    search_by_ids = ctx.query.get('ids', None)
     vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
     response = vehicle_tbl.scan()
     vehicles = response.get('Items', [])
@@ -147,6 +165,7 @@ def get_vehicles(ctx: LambdaCTX) -> dict:
         response = vehicle_tbl.scan(
             ExclusiveStartKey=response['LastEvaluatedKey'])
         vehicles.extend(response.get('Items', []))
+    if search_by_ids is not None: rallies = [vehicles for vehicles in vehicles if vehicles['rallyId'] in json.loads(search_by_ids)]
     return LambdaCTX.send_data(200, vehicles)
 
 def get_vehicle_by_id(vehicle_id: str) -> dict:
@@ -160,17 +179,64 @@ def create_vehicle(body: dict, user_id: str, ctx: LambdaCTX) -> dict:
     vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
     body['vehicleId'] = str(uuid.uuid4())
     vehicle_tbl.put_item(Item=body)
-    # ASK CARTER
-    # rally_ids = LambdaCTX.get_user_attribute(ctx.get_user(user_id), 'custom:rallyIds')
-    # rally_ids = json.loads(rally_ids if rally_ids != "" else "[]")
-    # data = [ { 'Name': 'custom:rallyIds', 'Value': json.dumps([*rally_ids, body['rallyId']], separators=(',', ':')) } ]
-    # LambdaCTX.set_user_attributes(data, user_id)
+    vehicle_ids = LambdaCTX.get_user_attribute(ctx.get_user(user_id), 'custom:vehicleIds')
+    vehicle_ids = json.loads(vehicle_ids if vehicle_ids != "" else "[]")
+    data = [ { 'Name': 'custom:vehicleIds', 'Value': json.dumps([*vehicle_ids, body['vehicleId']], separators=(',', ':')) } ]
+    LambdaCTX.set_user_attributes(data, user_id)
     return LambdaCTX.send_data(200, body)
 
 def delete_vehicle_by_id(vehicle_id: str) -> dict:
     vehicle_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['VEHICLE_TBL'])
     vehicle_tbl.delete_item(Key={'vehicleId': vehicle_id})
     return LambdaCTX.send_data(204, {})
+
+def create_checkout_session(line_items: typing.List[dict], base_url: str) -> dict:
+    #line_items = [{'product_name': pName, 'price': price, 'rally_id': rallyId}]
+    items = [
+        {
+            'price_data': {
+                'currency': 'usd',
+                'unit_amount': item['price'],
+                'product_data': {
+                    'name': item['product_name'],
+                    'metadata': {
+                        'rallyId': item['rally_id']
+                    }
+                }
+            }
+        } 
+        for item in line_items
+    ]
+    order_number = int(int.from_bytes(os.urandom(4), 'big'))
+    checkout = stripe.checkout.Session.create(
+        success_url=f'{base_url}/order-success?session={{CHECKOUT_SESSION_ID}}&orderId={order_number}',
+        line_items=items,
+        mode='payement',
+        cancel_url=base_url,
+        allow_promotion_codes=True,
+        currency='USD',
+        submit_type="pay",
+        client_reference_id=order_number
+    )
+    return LambdaCTX.send_data(200, { 'url': checkout.get('url') })
+
+def stripe_webhook(event:dict) -> dict:
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
+        line_items = stripe.checkout.Session.list_line_items(session['id'], limit=100, expand=['data.price.product']).get('data', [])
+        rally_table = boto3.resource('dynamodb').Table(LambdaCTX.ENV['RALLY_TBL'])
+        for item in line_items:
+            rally_table.update_item(
+                Key=item['price']['product']['metadata']['rallyId'],
+                UpdateExpression='SET registrations = registrations - :amt, allotoment = allotoment + :amt',
+                ExpressionAttributeValues={
+                    ':amt': 1,
+                }
+            )
+        return LambdaCTX.send_data(200, { 'message': 'success' })
+    else:
+      return LambdaCTX.send_error(404, f'Unhandled event type {event["type"]}')
+
 
 def main(event, l_context):
     try:
@@ -211,11 +277,35 @@ def main(event, l_context):
                 return LambdaCTX.send_error(400, 'Missing data')
             return get_vehicle_by_id(vehicle_id)
         elif ctx.route_is(HttpMethod.POST, '/vehicle'):
-            #ask carter
-            pass
+            username = ctx.get_authorized_claims().get('username', None)
+            if username is None:
+                return LambdaCTX.send_error(401, "Invalid clams")
+            return create_vehicle(ctx.body, username, ctx)
         elif ctx.route_is(HttpMethod.DELETE, '/vehicle/{vehicleId}'):
-            #ask farter
-            pass
+            vehicle_id = ctx.path.get('vehicleId', None)
+            if vehicle_id is None:
+                return LambdaCTX.send_error(400, 'Missing data')
+            username = ctx.get_authorized_claims().get('username', None)
+            if username is None:
+                return LambdaCTX.send_error(401, "Invalid clams")
+            vehicle_ids = LambdaCTX.get_user_attribute(
+                ctx.get_user(username), 'custom:vehicleIds')
+            vehicle_ids = json.loads(vehicle_ids if vehicle_ids != "" else "[]")
+            if vehicle_id not in vehicle_ids:
+                return LambdaCTX.send_error(403, "You do not own this vehicle")
+            return delete_vehicle_by_id(vehicle_id)
+        elif ctx.route_is(HttpMethod.POST, '/checkout'):
+            line_items = ctx.body
+            if line_items is None or not isinstance(ctx.body, list): return LambdaCTX.send_error(400, 'Missing/Malformed data')
+            if False in ['product_name' in x and 'price' in x and 'rally_id' in x for x in line_items]: 
+                return LambdaCTX.send_error(400, 'Malformed data')
+            return create_checkout_session(line_items, ctx.headers.get('origin', 'http://localhost:3000'))
+        elif ctx.route_is(HttpMethod.POST, '/stripe/webhook'):
+            webhook_sk = ctx.ENV.get('STRIPE_WH_SK', None)
+            if webhook_sk is None: return LambdaCTX.send_error(500, "Missing validation")
+            event = ctx.validate_stripe_wh(webhook_sk)
+            if event is None: return LambdaCTX.send_error(500, 'Invalid event')
+            return stripe_webhook(event)
 
         else:
             LambdaCTX.send_error(404, 'Not found')
