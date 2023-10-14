@@ -194,6 +194,7 @@ def create_checkout_session(line_items: typing.List[dict], base_url: str) -> dic
     #line_items = [{'product_name': pName, 'price': price, 'rally_id': rallyId}]
     items = [
         {
+            'quantity': 1,
             'price_data': {
                 'currency': 'usd',
                 'unit_amount': item['price'],

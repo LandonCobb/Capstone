@@ -41,7 +41,7 @@ export const AppStore: React.FC<{ children?: React.ReactNode }> = ({
   const [state, dispatch] = React.useReducer(reducer, initState);
 
   /**
-   * Gets the user daa from the AWS Auth api
+   * Gets the user data from the AWS Auth api
    * @note the `React.useCallback` definition wraps an generic arrow function with a dependacy array
    */
   const getUserData = React.useCallback(async () => {
