@@ -3,3 +3,7 @@ export interface User {
     email: string;
     nickname: string;
 }
+
+export interface Rally {
+    rallyId: string;
+}

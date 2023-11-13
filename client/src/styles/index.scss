@@ -15,3 +15,117 @@ body {
   display: flex;
   place-items: center;
 }
+
+.h-100 {
+  height: 100vh;
+}
+
+.w-100 {
+  width: 100vw;
+}
+
+.h-50 {
+  height: 50vh;
+}
+
+.w-50 {
+  width: 50vw;
+}
+
+.w-100p {
+  width: 100%;
+}
+
+.mw-100p {
+  max-width: 100%;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.center {
+  justify-content: center;
+  align-items: center;
+}
+
+.end {
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.end2 {
+  justify-content: center;
+  align-items: flex-end;
+}
+
+.start {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.start2 {
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.flex-row {
+  flex-direction: row;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.wrap {
+  flex-wrap: wrap;
+}
+
+.t-wrap {
+  word-break: break-all;
+}
+
+.v-1 {
+  flex: 1;
+}
+
+.v-2 {
+  flex: 2;
+}
+
+.spacer {
+  flex-grow: 1;
+}
+
+.va-b {
+  vertical-align: text-bottom;
+}
+
+.va-t {
+  vertical-align: text-top;
+}
+
+.c-pointer {
+  cursor: pointer;
+}
+
+.bar-text {
+  display: flex;
+  flex-basis: 100%;
+  align-items: center;
+  font-family: inherit;
+  &::before,
+  &::after {
+    content: "";
+    flex-grow: 1;
+    background-color: currentColor;
+    height: 1px;
+    font-size: 0px;
+    line-height: 0px;
+    margin: 0px 8px;
+  }
+}

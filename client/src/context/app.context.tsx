@@ -85,6 +85,21 @@ export const AppStore: React.FC<{ children?: React.ReactNode }> = ({
     init();
   }, [refreshUser]);
 
+  React.useEffect(() => {
+    if (state.isAuthenticated) {
+      const getToken = async () => {
+        try {
+          const session = await Auth.currentSession();
+          if (session) {
+            console.log("Access:", session.getAccessToken().getJwtToken());
+            // console.log("Id:", session.getIdToken().getJwtToken());
+          } else console.log("No Session");
+        } catch {} // eslint-disable-line no-empty
+      };
+      getToken();
+    }
+  }, [state.isAuthenticated]);
+
   return (
     <AppContext.Provider value={{ ...state, refreshUser }}>
       {children}
@@ -93,22 +108,3 @@ export const AppStore: React.FC<{ children?: React.ReactNode }> = ({
 };
 
 export default AppContext;
-
-// const Test: React.FC = () => {
-//   const ctx = React.useContext(AppContext)!;
-
-//   if (!ctx.isAuthenticated) return <div>Youre not authenticated</div>;
-
-//   return (
-//     <div>
-//         <button onClick={ctx.refreshUser}>Refresh user</button>
-//       <pre>{JSON.stringify(ctx, null, 2)}</pre>
-//     </div>
-//   );
-// };
-
-// const textAPPMain = (
-//   <AppStore>
-//     <Test />
-//   </AppStore>
-// );
