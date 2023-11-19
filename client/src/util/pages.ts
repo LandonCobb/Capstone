@@ -15,7 +15,14 @@ export const pages: T.Page[] = [
     title: "Explore",
     path: "/explore",
     onNavBar: true,
-    requiresAuth: false,
+    requiresAuth: true,
+    component: Explore
+  },
+  {
+    title: "Create Rally",
+    path: "/makerally",
+    onNavBar: true,
+    requiresAuth: true,
     component: Explore
   },
   {
