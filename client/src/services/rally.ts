@@ -12,7 +12,7 @@ export const getAllRallies = async (): Promise<T.Rally[] | null> => {
 
 export const getRallyById = async (rallyId: string): Promise<T.Rally | null> => {
   try {
-    const response = await $http.get('/rally/{rallyId}');
+    const response = await $http.get(`/rally/${rallyId}`);
     return response.data || null;
   } catch {
     return null;
@@ -32,7 +32,7 @@ export const createRally = async (
 
 export const deleteRallyById = async (rallyId: string): Promise<T.Rally | null> => {
   try {
-    const response = await $http.delete('/rally/{rallyId}');
+    const response = await $http.delete(`/rally/${rallyId}`);
     return response.data || null;
   } catch {
     return null;

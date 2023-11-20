@@ -12,7 +12,7 @@ export const getAllVehicles = async (): Promise<T.Vehicle[] | null> => {
 
   export const getVehicleById = async (vehicleId: string): Promise<T.Vehicle | null> => {
     try {
-      const response = await $http.get('/vehicle/{vehicleId}');
+      const response = await $http.get(`/vehicle/${vehicleId}`);
       return response.data || null;
     } catch {
       return null;
@@ -32,7 +32,7 @@ export const getAllVehicles = async (): Promise<T.Vehicle[] | null> => {
   
   export const deleteVehicleById = async (vehicleId: string): Promise<T.Vehicle | null> => {
     try {
-      const response = await $http.delete('/vehicle/{vehicleId}');
+      const response = await $http.delete(`/vehicle/${vehicleId}`);
       return response.data || null;
     } catch {
       return null;

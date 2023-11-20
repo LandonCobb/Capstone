@@ -1,8 +1,8 @@
 import * as React from "react";
 import LoginModal from "@/components/modals/login.modal";
-import { Button } from "antd";
-import { Auth } from "aws-amplify";
+import { Menu, Button, Layout } from "antd";
 import { useLocation } from "wouter";
+import { Auth } from "aws-amplify";
 import AppContext from "@/context/app.context";
 
 interface Props {
@@ -20,19 +20,65 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
   };
 
   return (
-    <div>
-      <div>
-        Header stuff for authed page
-        <Button.Group>
-          <Button>Edit Profile</Button>
-          <Button onClick={logout}>Logout</Button>
-        </Button.Group>
-      </div>
+    <Layout>
+      <Layout.Header style={{ background: "red" }}>
+        <div
+          className="flex center"
+          style={{ backgroundColor: "red", color: "white" }}
+        >
+          {/* LOGO GOES HERE; NOT IN THE MENU ELEMENET */}
+          <Menu
+            mode="horizontal"
+            style={{ backgroundColor: "red", color: "white", width: "100%" }}
+          >
+            <Menu.Item key="home">
+              <Button
+                style={{
+                  backgroundColor: "transparent",
+                  color: "white",
+                  border: "0px",
+                }}
+                onClick={() => setLocation("/")}
+              >
+                Home
+              </Button>
+            </Menu.Item>
+            <Menu.Item key="explore">
+              <Button
+                style={{
+                  backgroundColor: "transparent",
+                  color: "white",
+                  border: "0px",
+                }}
+                onClick={() => setLocation("/explore")}
+              >
+                Explore
+              </Button>
+            </Menu.Item>
+            <Menu.Item key="createRally">
+              <Button
+                style={{
+                  backgroundColor: "transparent",
+                  color: "white",
+                  border: "0px",
+                }}
+                onClick={() => setLocation("/makerally")}
+              >
+                Host a Rally
+              </Button>
+            </Menu.Item>
+          </Menu>
+          <div className="spacer" />
+          <Button.Group>
+            <Button>Edit Profile</Button>
+            <Button onClick={logout}>Logout</Button>
+          </Button.Group>
+        </div>
+      </Layout.Header>
+      <Layout.Content>{children}</Layout.Content>
 
-      {children}
-
-      <div>Footer stuff for authed page</div>
-    </div>
+      <Layout.Footer>Footer stuff</Layout.Footer>
+    </Layout>
   );
 };
 

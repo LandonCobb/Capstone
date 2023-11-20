@@ -1,0 +1,4 @@
+-> Call the /checkout endpoint with an array of:
+    { 'product_name': pName, 'price': price, 'rally_id': rallyId }
+-> That endpint will return a URL you need to open with:
+    window.open(url, "_blank");
