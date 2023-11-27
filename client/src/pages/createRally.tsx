@@ -1,5 +1,5 @@
 import * as React from "react";
-import Template from "@/components/template";
+import AuthTemplate from "@/components/template.authed";
 import { Form, Input, Select, Checkbox, Button } from "antd";
 import { v4 as uuidv4 } from 'uuid';
 import * as T from "@/types";
@@ -37,7 +37,7 @@ const CreateRally: React.FC = () => {
   };
 
   return (
-    <Template>
+    <AuthTemplate>
       <div style={{ textAlign: 'center' }}>
         <h1>Host your own Rally</h1>
         {confirmation && <p>{confirmation}</p>}
@@ -103,7 +103,7 @@ const CreateRally: React.FC = () => {
           </Form.Item>
         </Form>
       </div>
-    </Template>
+    </AuthTemplate>
   );
 };
 

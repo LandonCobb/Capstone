@@ -1,12 +1,12 @@
 import * as React from "react"
-import Template from "@/components/template"
+import AuthTemplate from "@/components/template.authed";
 
 
 const Profile:  React.FC = () => {
 
-    return <Template>
+    return <AuthTemplate>
        <h1 style={{ textAlign: 'center' }}>Profile</h1>
-    </Template>
+    </AuthTemplate>
 }
 
 export default Profile

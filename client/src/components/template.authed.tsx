@@ -10,6 +10,14 @@ interface Props {
 }
 
 const AuthTemplate: React.FC<Props> = ({ children }) => {
+  const buttonStyle = {
+    backgroundColor: "transparent",
+    color: "white",
+    border: "0px",
+    boxShadow: "none",
+  };
+
+
   const appContext = React.useContext(AppContext)!;
   const setLocation = useLocation()[1];
 
@@ -21,7 +29,7 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
 
   return (
     <Layout>
-      <Layout.Header style={{ background: "red" }}>
+      <Layout.Header style={{ background: "red", height: "auto" }}>
         <div
           className="flex center"
           style={{ backgroundColor: "red", color: "white" }}
@@ -30,15 +38,11 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
           {/* LOGO GOES HERE; NOT IN THE MENU ELEMENET */}
           <Menu
             mode="horizontal"
-            style={{ backgroundColor: "red", color: "white", width: "100%" }}
+            style={{ backgroundColor: "red", color: "white", width: "100%", borderBottom: "none" }}
           >
             <Menu.Item key="home">
               <Button
-                style={{
-                  backgroundColor: "transparent",
-                  color: "white",
-                  border: "0px",
-                }}
+                style={buttonStyle}
                 onClick={() => setLocation("/")}
               >
                 Home
@@ -46,11 +50,7 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
             </Menu.Item>
             <Menu.Item key="explore">
               <Button
-                style={{
-                  backgroundColor: "transparent",
-                  color: "white",
-                  border: "0px",
-                }}
+                style={buttonStyle}
                 onClick={() => setLocation("/explore")}
               >
                 Explore
@@ -58,11 +58,7 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
             </Menu.Item>
             <Menu.Item key="createRally">
               <Button
-                style={{
-                  backgroundColor: "transparent",
-                  color: "white",
-                  border: "0px",
-                }}
+                style={buttonStyle}
                 onClick={() => setLocation("/makerally")}
               >
                 Host a Rally
@@ -76,9 +72,11 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
           </Button.Group>
         </div>
       </Layout.Header>
-      <Layout.Content>{children}</Layout.Content>
+      <Layout.Content style={{ margin: "20px" }}>{children}</Layout.Content>
 
-      <Layout.Footer>Rally</Layout.Footer>
+      <Layout.Footer>
+        Rally | Created by Landon Cobb
+      </Layout.Footer>
     </Layout>
   );
 };
