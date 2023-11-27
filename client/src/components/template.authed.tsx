@@ -3,6 +3,7 @@ import { Menu, Button, Layout } from "antd";
 import { useLocation } from "wouter";
 import { Auth } from "aws-amplify";
 import AppContext from "@/context/app.context";
+import Logo from "@/components/logo";
 
 interface Props {
   children?: React.ReactNode;
@@ -25,6 +26,7 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
           className="flex center"
           style={{ backgroundColor: "red", color: "white" }}
         >
+          <Logo/>
           {/* LOGO GOES HERE; NOT IN THE MENU ELEMENET */}
           <Menu
             mode="horizontal"

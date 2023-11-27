@@ -2,6 +2,7 @@ import * as React from "react";
 import LoginModal from "@/components/modals/login.modal";
 import { Menu, Button, Layout } from "antd";
 import { useLocation } from "wouter";
+import Logo from "@/components/logo";
 
 interface Props {
   children?: React.ReactNode;
@@ -16,6 +17,7 @@ const Template: React.FC<Props> = ({ children }) => {
           className="flex center"
           style={{ backgroundColor: "red", color: "white" }}
         >
+          <Logo/>
           {/* LOGO GOES HERE; NOT IN THE MENU ELEMENET */}
           <Menu
             mode="horizontal"
