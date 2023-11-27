@@ -64,7 +64,7 @@ const Template: React.FC<Props> = ({ children }) => {
       </Layout.Header>
       <Layout.Content>{children}</Layout.Content>
 
-      <Layout.Footer>Footer stuff</Layout.Footer>
+      <Layout.Footer>Rally</Layout.Footer>
     </Layout>
   );
 };

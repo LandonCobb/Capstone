@@ -5,7 +5,7 @@ export interface User {
 }
 
 export interface Rally {
-    rallyId: string;
+    ralliId: string;
     name: string;
     vehicleType: string;
     isPrivate: boolean;

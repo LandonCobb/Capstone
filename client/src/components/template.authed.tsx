@@ -1,5 +1,4 @@
 import * as React from "react";
-import LoginModal from "@/components/modals/login.modal";
 import { Menu, Button, Layout } from "antd";
 import { useLocation } from "wouter";
 import { Auth } from "aws-amplify";
@@ -70,14 +69,14 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
           </Menu>
           <div className="spacer" />
           <Button.Group>
-            <Button>Edit Profile</Button>
+            <Button onClick={() => setLocation("/profile")}>Edit Profile</Button>
             <Button onClick={logout}>Logout</Button>
           </Button.Group>
         </div>
       </Layout.Header>
       <Layout.Content>{children}</Layout.Content>
 
-      <Layout.Footer>Footer stuff</Layout.Footer>
+      <Layout.Footer>Rally</Layout.Footer>
     </Layout>
   );
 };

@@ -2,6 +2,8 @@ import * as T from "@/types";
 import Home from "@/pages/home";
 import Explore from "@/pages/explore"
 import Dashboard from "@/pages/auth/dashboard.main";
+import Profile from "@/pages/profile";
+import CreateRally from "@/pages/createRally";
 
 export const pages: T.Page[] = [
   {
@@ -23,7 +25,7 @@ export const pages: T.Page[] = [
     path: "/makerally",
     onNavBar: true,
     requiresAuth: true,
-    component: Explore
+    component: CreateRally
   },
   {
     title: "Dashboard",
@@ -31,5 +33,12 @@ export const pages: T.Page[] = [
     onNavBar: false,
     requiresAuth: true,
     component: Dashboard
+  },
+  {
+    title: "Profile",
+    path: "/profile",
+    onNavBar: true,
+    requiresAuth: true,
+    component: Profile
   }
 ];
