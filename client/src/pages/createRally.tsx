@@ -1,40 +1,48 @@
-import * as React from "react"
-import Template from "@/components/template"
+import * as React from "react";
+import Template from "@/components/template";
 import { Form, Input, Select, Checkbox, Button } from "antd";
 import { v4 as uuidv4 } from 'uuid';
 import * as T from "@/types";
-import {createRally} from "../services/rally"
+import { createRally } from "../services/rally";
 import { useForm } from "antd/lib/form/Form";
 
 const { Option } = Select;
 
-const CreateRally:  React.FC = () => {
-    //const [form] = Form.useForm();
-    const onFinish = async (rally: any) => {
-        // Handle form submission here
-        const t_rally: T.Rally = {
-            ralliId: uuidv4(),
-            name: rally.rallyName,
-            vehicleType: rally.vehicleType,
-            isPrivate: rally.isPrivate,
-            regFee: rally.registrationFee,
-            startPoint: rally.startPoint,
-            endPoint: rally.endPoint
-        };
+const CreateRally: React.FC = () => {
+  const [confirmation, setConfirmation] = React.useState<string | null>(null);
+  const [form] = useForm();
 
-        const res = await createRally(t_rally);
+  const onFinish = async (rally: any) => {
+    // Handle form submission here
+    const t_rally: T.Rally = {
+      ralliId: uuidv4(),
+      name: rally.rallyName,
+      vehicleType: rally.vehicleType,
+      isPrivate: rally.isPrivate,
+      regFee: rally.registrationFee,
+      startPoint: rally.startPoint,
+      endPoint: rally.endPoint
+    };
 
-        if (res) console.log("it worked");
-        else console.log("it failed");
-        console.log("Form values:", t_rally);
-        //form.resetFields();
+    const res = await createRally(t_rally);
 
-      };
+    if (res) {
+      setConfirmation("Rally has been created!"); // Set confirmation message
+      form.resetFields(); // Reset form fields
+    } else {
+      setConfirmation("Failed to create the rally.");
+    }
 
-    return <Template>
-        <div style={{ textAlign: 'center' }}>
-            <h1>Host your own Rally</h1>
-            <Form
+    console.log("Form values:", t_rally);
+  };
+
+  return (
+    <Template>
+      <div style={{ textAlign: 'center' }}>
+        <h1>Host your own Rally</h1>
+        {confirmation && <p>{confirmation}</p>}
+        <Form
+          form={form} // Pass the form instance
           name="createRallyForm"
           onFinish={onFinish}
           style={{ maxWidth: "400px", margin: "0 auto" }}
@@ -94,8 +102,9 @@ const CreateRally:  React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
-        </div>
+      </div>
     </Template>
-}
+  );
+};
 
-export default CreateRally
+export default CreateRally;

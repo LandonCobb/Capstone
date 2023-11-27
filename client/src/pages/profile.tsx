@@ -5,7 +5,7 @@ import Template from "@/components/template"
 const Profile:  React.FC = () => {
 
     return <Template>
-        <h1>profile page</h1>
+       <h1 style={{ textAlign: 'center' }}>Profile</h1>
     </Template>
 }
 
