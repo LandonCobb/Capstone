@@ -21,6 +21,8 @@ const CreateRally: React.FC = () => {
       regFee: rally.registrationFee,
       startPoint: rally.startPoint,
       endPoint: rally.endPoint,
+      registrations: rally.registrations,
+      allotment: parseInt(rally.regAllotment)
     };
 
     const res = await createRally(t_rally);
@@ -86,6 +88,16 @@ const CreateRally: React.FC = () => {
             name="registrationFee"
             rules={[
               { required: true, message: "Please enter the registration fee!" },
+            ]}
+          >
+            <Input type="number" />
+          </Form.Item>
+
+          <Form.Item
+            label="Registration allotment"
+            name="regAllotment"
+            rules={[
+              { required: true, message: "Please enter the registration allotment!" },
             ]}
           >
             <Input type="number" />

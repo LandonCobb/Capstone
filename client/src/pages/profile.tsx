@@ -5,6 +5,7 @@ import { Button, Modal, Form, Input, Card } from "antd";
 import { getRallyById } from "../services/rally";
 import { createVehicle, getVehicleById } from "../services/vehicle";
 import * as T from "@/types";
+import { Auth } from "aws-amplify";
 
 const Profile: React.FC = () => {
   const appContext = useContext(AppContext); // Assuming user information is available in AppContext
@@ -86,6 +87,7 @@ const Profile: React.FC = () => {
                   <p>Starting point: {rally.startPoint}</p>
                   <p>Ending point: {rally.endPoint}</p>
                   <p>Registration Fee: ${rally.regFee}</p>
+                  <p>Registrations: {rally.registrations}</p>
                 </Card>
               ))
             ) : (

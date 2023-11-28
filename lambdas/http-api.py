@@ -37,6 +37,7 @@ class LambdaCTX:
                 self.body = {}
         else:
             self.body = {}
+        self.raw_body = event.get('body', None)
         self.query = event.get('queryStringParameters', {})
         self.path = event.get('pathParameters', {})
         self.headers = event.get('headers', {})
@@ -212,7 +213,7 @@ def create_checkout_session(line_items: typing.List[dict], base_url: str) -> dic
     checkout = stripe.checkout.Session.create(
         success_url=f'{base_url}/order-success?session={{CHECKOUT_SESSION_ID}}&orderId={order_number}',
         line_items=items,
-        mode='payement',
+        mode='payment',
         cancel_url=base_url,
         allow_promotion_codes=True,
         currency='USD',
@@ -228,10 +229,10 @@ def stripe_webhook(event:dict) -> dict:
         rally_table = boto3.resource('dynamodb').Table(LambdaCTX.ENV['RALLY_TBL'])
         for item in line_items:
             rally_table.update_item(
-                Key=item['price']['product']['metadata']['ralliId'],
-                UpdateExpression='SET registrations = registrations - :amt, allotoment = allotoment + :amt',
+                Key={'ralliId': item['price']['product']['metadata']['ralliId']},
+                UpdateExpression='SET registrations = registrations - :amt, allotment = allotment + :amt',
                 ExpressionAttributeValues={
-                    ':amt': 1,
+                    ':amt': -1,
                 }
             )
         return LambdaCTX.send_data(200, { 'message': 'success' })
@@ -298,7 +299,7 @@ def main(event, l_context):
         elif ctx.route_is(HttpMethod.POST, '/checkout'):
             line_items = ctx.body
             if line_items is None or not isinstance(ctx.body, list): return LambdaCTX.send_error(400, 'Missing/Malformed data')
-            if False in ['product_name' in x and 'price' in x and 'rally_id' in x for x in line_items]: 
+            if False in ['product_name' in x and 'price' in x and 'ralli_id' in x for x in line_items]: 
                 return LambdaCTX.send_error(400, 'Malformed data')
             return create_checkout_session(line_items, ctx.headers.get('origin', 'http://localhost:3000'))
         elif ctx.route_is(HttpMethod.POST, '/stripe/webhook'):

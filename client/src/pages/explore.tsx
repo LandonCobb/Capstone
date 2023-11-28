@@ -1,15 +1,36 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import Template from "@/components/template";
-import { getAllRallies, createCheckout } from "@/services";
-import { Card, Input, Button, Modal } from "antd";
+import { getAllRallies, createCheckout, getVehicleById } from "@/services";
+import { Card, Input, Button, Modal, Select } from "antd";
+import AppContext from "@/context/app.context";
 import * as T from "@/types";
 
 const Explore: React.FC = () => {
+  const appContext = useContext(AppContext);
   const [rallies, setRallies] = useState<T.Rally[]>([]);
   const [filteredRallies, setFilteredRallies] = useState<T.Rally[]>([]);
   const [searchValue, setSearchValue] = useState<string>("");
   const [modalRally, setModalRally] = useState<T.Rally | null>(null); // State to hold the rally for the modal
   const [modalVisible, setModalVisible] = useState<boolean>(false);
+  const [vehicles, setVehicles] = useState<T.Vehicle[]>([]);
+
+  const fetchVehicles = async () => {
+    try {
+      if (appContext?.user?.vehicleIds) {
+        const vehicleDetails = await Promise.all(
+          appContext.user.vehicleIds.map((vehicleId) =>
+            getVehicleById(vehicleId)
+          )
+        );
+        const validVehicles = vehicleDetails.filter(
+          (vehicle) => vehicle !== null
+        ) as T.Vehicle[];
+        setVehicles(validVehicles);
+      }
+    } catch (error) {
+      console.error("Error fetching vehicles:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchRallies = async () => {
@@ -30,6 +51,7 @@ const Explore: React.FC = () => {
     };
 
     fetchRallies();
+    fetchVehicles();
   }, []);
 
   const handleSearch = () => {
@@ -44,16 +66,20 @@ const Explore: React.FC = () => {
   };
 
   const handleRegister = (rally: T.Rally) => {
-    createCheckout([
-      {
-        price: Math.ceil(parseFloat(rally.regFee) * 100),
-        product_name: `Registration for ${rally.name}`,
-        ralli_id: rally.ralliId,
-      },
-    ]).then((url) => {url && window.open(url)});
     setModalRally(rally); // Set the rally for the modal
     setModalVisible(true);
   };
+
+  // const onRegisterSubmit = (rally: T.Rally) => {
+  //   createCheckout([
+  //     {
+  //       price: Math.ceil(parseFloat(rally.regFee) * 100),
+  //       product_name: `Registration for ${rally.name}`,
+  //       ralli_id: rally.ralliId,
+  //     },
+  //   ]).then((url) => {url && window.open(url)});
+  //   setModalVisible(false);
+  // }
 
   return (
     <Template>
@@ -78,6 +104,7 @@ const Explore: React.FC = () => {
               <p>Starting point: {rally.startPoint}</p>
               <p>Ending point: {rally.endPoint}</p>
               <p>Registration Fee: ${rally.regFee}</p>
+              <p>Allotment: {rally.allotment}</p>
               <Button onClick={() => handleRegister(rally)}>
                 Register
               </Button>{" "}
@@ -86,13 +113,31 @@ const Explore: React.FC = () => {
                 title={`Register for ${modalRally?.name || ""}`}
                 visible={modalVisible && modalRally === rally}
                 onOk={() => {
-                  /* Handle registration logic here */
+                  createCheckout([
+                    {
+                      price: Math.ceil(parseFloat(rally.regFee) * 100),
+                      product_name: `Registration for ${rally.name}`,
+                      ralli_id: rally.ralliId,
+                    },
+                  ]).then((url) => {
+                    url && window.open(url);
+                  });
                   setModalVisible(false);
                 }}
                 onCancel={() => setModalVisible(false)}
               >
                 {/* Modal content for registration */}
-                <p>Registration form goes here...</p>
+                <Select defaultValue="" style={{ width: "100%" }}>
+                  {/* Map vehicles to options in Select */}
+                  {vehicles.map((vehicle) => (
+                    <Select.Option
+                      key={vehicle.vehicleId}
+                      value={vehicle.vehicleId}
+                    >
+                      {vehicle.model}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Modal>
             </Card>
           ))

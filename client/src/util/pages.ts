@@ -4,6 +4,7 @@ import Explore from "@/pages/explore"
 import Dashboard from "@/pages/auth/dashboard.main";
 import Profile from "@/pages/profile";
 import CreateRally from "@/pages/createRally";
+import OrderSuccess from "@/pages/orderSuccess";
 
 export const pages: T.Page[] = [
   {
@@ -40,5 +41,12 @@ export const pages: T.Page[] = [
     onNavBar: true,
     requiresAuth: true,
     component: Profile
+  },
+  {
+    title: "Order Success",
+    path: "/order-success",
+    onNavBar: false,
+    requiresAuth: true,
+    component: OrderSuccess
   }
 ];

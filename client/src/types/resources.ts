@@ -4,6 +4,7 @@ export interface User {
     nickname: string;
     rallyIds: [];
     vehicleIds: [];
+    registrations: [];
 }
 
 export interface CheckoutLineItem {
@@ -20,6 +21,8 @@ export interface Rally {
     regFee: string;
     startPoint: string;
     endPoint: string;
+    registrations: number;
+    allotment: number;
 }
 
 export interface Vehicle {

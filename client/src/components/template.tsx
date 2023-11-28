@@ -58,7 +58,7 @@ const Template: React.FC<Props> = ({ children }) => {
           <LoginModal />
         </div>
       </Layout.Header>
-      <Layout.Content style={{ margin: "20px" }}>{children}</Layout.Content>
+      <Layout.Content style={{ margin: "20px", height: "auto" }}>{children}</Layout.Content>
 
       <Layout.Footer>
         Rally | Created by Landon Cobb
