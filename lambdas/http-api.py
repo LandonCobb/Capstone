@@ -191,7 +191,7 @@ def delete_vehicle_by_id(vehicle_id: str) -> dict:
     return LambdaCTX.send_data(204, {})
 
 def create_checkout_session(line_items: typing.List[dict], base_url: str) -> dict:
-    #line_items = [{'product_name': pName, 'price': price, 'rally_id': rallyId}]
+    #line_items = [{'product_name': pName, 'price': price, 'ralli_id': ralliId}]
     items = [
         {
             'quantity': 1,
@@ -201,7 +201,7 @@ def create_checkout_session(line_items: typing.List[dict], base_url: str) -> dic
                 'product_data': {
                     'name': item['product_name'],
                     'metadata': {
-                        'rallyId': item['rally_id']
+                        'ralliId': item['ralli_id']
                     }
                 }
             }
@@ -228,7 +228,7 @@ def stripe_webhook(event:dict) -> dict:
         rally_table = boto3.resource('dynamodb').Table(LambdaCTX.ENV['RALLY_TBL'])
         for item in line_items:
             rally_table.update_item(
-                Key=item['price']['product']['metadata']['rallyId'],
+                Key=item['price']['product']['metadata']['ralliId'],
                 UpdateExpression='SET registrations = registrations - :amt, allotoment = allotoment + :amt',
                 ExpressionAttributeValues={
                     ':amt': 1,

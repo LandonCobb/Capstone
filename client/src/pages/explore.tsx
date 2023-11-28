@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Template from "@/components/template";
-import { getAllRallies } from "../services/rally";
+import { getAllRallies, createCheckout } from "@/services";
 import { Card, Input, Button, Modal } from "antd";
 import * as T from "@/types";
 
@@ -44,13 +44,20 @@ const Explore: React.FC = () => {
   };
 
   const handleRegister = (rally: T.Rally) => {
+    createCheckout([
+      {
+        price: Math.ceil(parseFloat(rally.regFee) * 100),
+        product_name: `Registration for ${rally.name}`,
+        ralli_id: rally.ralliId,
+      },
+    ]).then((url) => {url && window.open(url)});
     setModalRally(rally); // Set the rally for the modal
     setModalVisible(true);
   };
 
   return (
     <Template>
-      <h1 style={{ textAlign: 'center' }}>Explore Rallies!</h1>
+      <h1 style={{ textAlign: "center" }}>Explore Rallies!</h1>
       <div style={{ textAlign: "center" }}>
         <Input
           placeholder="Search Rallies"
@@ -71,9 +78,12 @@ const Explore: React.FC = () => {
               <p>Starting point: {rally.startPoint}</p>
               <p>Ending point: {rally.endPoint}</p>
               <p>Registration Fee: ${rally.regFee}</p>
-              <Button onClick={() => handleRegister(rally)}>Register</Button> {/* Pass rally to handleRegister */}
+              <Button onClick={() => handleRegister(rally)}>
+                Register
+              </Button>{" "}
+              {/* Pass rally to handleRegister */}
               <Modal
-                title={`Register for ${modalRally?.name || ''}`}
+                title={`Register for ${modalRally?.name || ""}`}
                 visible={modalVisible && modalRally === rally}
                 onOk={() => {
                   /* Handle registration logic here */

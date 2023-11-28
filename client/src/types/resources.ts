@@ -6,6 +6,12 @@ export interface User {
     vehicleIds: [];
 }
 
+export interface CheckoutLineItem {
+    product_name: string;
+    price: number; //$10 = 1000 | $10.99 = 1099
+    ralli_id: string;
+}
+
 export interface Rally {
     ralliId: string;
     name: string;
