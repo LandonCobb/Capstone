@@ -2,6 +2,8 @@ export interface User {
     uid: string;
     email: string;
     nickname: string;
+    rallyIds: [];
+    vehicleIds: [];
 }
 
 export interface Rally {

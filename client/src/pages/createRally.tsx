@@ -1,7 +1,6 @@
 import * as React from "react";
 import AuthTemplate from "@/components/template.authed";
 import { Form, Input, Select, Checkbox, Button } from "antd";
-import { v4 as uuidv4 } from 'uuid';
 import * as T from "@/types";
 import { createRally } from "../services/rally";
 import { useForm } from "antd/lib/form/Form";
@@ -15,13 +14,13 @@ const CreateRally: React.FC = () => {
   const onFinish = async (rally: any) => {
     // Handle form submission here
     const t_rally: T.Rally = {
-      ralliId: uuidv4(),
+      ralliId: rally.ralliId,
       name: rally.rallyName,
       vehicleType: rally.vehicleType,
       isPrivate: rally.isPrivate,
       regFee: rally.registrationFee,
       startPoint: rally.startPoint,
-      endPoint: rally.endPoint
+      endPoint: rally.endPoint,
     };
 
     const res = await createRally(t_rally);

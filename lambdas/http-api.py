@@ -132,7 +132,7 @@ def get_rallies(ctx: LambdaCTX) -> dict:
 
 def get_rally_by_id(rally_id: str) -> dict:
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
-    rally = rally_tbl.get_item(Key={'rallyId': rally_id}).get('Item', None)
+    rally = rally_tbl.get_item(Key={'ralliId': rally_id}).get('Item', None)
     if rally is None:
         return LambdaCTX.send_error(404, 'Rally not found')
     return LambdaCTX.send_data(200, rally)
@@ -140,20 +140,20 @@ def get_rally_by_id(rally_id: str) -> dict:
 
 def create_rally(body: dict, user_id: str, ctx:LambdaCTX) -> dict:
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
-    body['rallyId'] = str(uuid.uuid4())
+    body['ralliId'] = str(uuid.uuid4())
     if 'allotment' not in body: body['allotment'] = sys.maxsize
     body['registrations'] = 0
     rally_tbl.put_item(Item=body)
     rally_ids = LambdaCTX.get_user_attribute(ctx.get_user(user_id), 'custom:rallyIds')
     rally_ids = json.loads(rally_ids if rally_ids != "" else "[]")
-    data = [ { 'Name': 'custom:rallyIds', 'Value': json.dumps([*rally_ids, body['rallyId']], separators=(',', ':')) } ]
+    data = [ { 'Name': 'custom:rallyIds', 'Value': json.dumps([*rally_ids, body['ralliId']], separators=(',', ':')) } ]
     LambdaCTX.set_user_attributes(data, user_id)
     return LambdaCTX.send_data(200, body)
 
 
 def delete_rally_by_id(rally_id: str) -> dict:
     rally_tbl = boto3.resource("dynamodb").Table(LambdaCTX.ENV['RALLY_TBL'])
-    rally_tbl.delete_item(Key={'rallyId': rally_id})
+    rally_tbl.delete_item(Key={'ralliId': rally_id})
     return LambdaCTX.send_data(204, {})
 
 def get_vehicles(ctx: LambdaCTX) -> dict:

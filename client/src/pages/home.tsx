@@ -4,7 +4,6 @@ import Template from "@/components/template";
 
 const Home: React.FC = () => {
   const appContext = React.useContext(AppContext)!;
-
   return (
     <Template>
       <h1 style={{ textAlign: 'center' }}>Home</h1>
