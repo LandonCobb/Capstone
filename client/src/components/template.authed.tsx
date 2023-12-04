@@ -28,7 +28,7 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
   };
 
   return (
-    <Layout>
+    <Layout style={{height: "100vh"}}>
       <Layout.Header style={{ background: "red", height: "auto" }}>
         <div
           className="flex center"
@@ -77,6 +77,17 @@ const AuthTemplate: React.FC<Props> = ({ children }) => {
       <Layout.Footer>
         Rally | Created by Landon Cobb
       </Layout.Footer>
+      <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            borderLeft: "500px solid transparent",
+            borderBottom: "500px solid red", // Change 'red' to the desired color
+          }}
+        />
     </Layout>
   );
 };

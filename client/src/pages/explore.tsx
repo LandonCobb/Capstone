@@ -70,17 +70,6 @@ const Explore: React.FC = () => {
     setModalVisible(true);
   };
 
-  // const onRegisterSubmit = (rally: T.Rally) => {
-  //   createCheckout([
-  //     {
-  //       price: Math.ceil(parseFloat(rally.regFee) * 100),
-  //       product_name: `Registration for ${rally.name}`,
-  //       ralli_id: rally.ralliId,
-  //     },
-  //   ]).then((url) => {url && window.open(url)});
-  //   setModalVisible(false);
-  // }
-
   return (
     <Template>
       <h1 style={{ textAlign: "center" }}>Explore Rallies!</h1>

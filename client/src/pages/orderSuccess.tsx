@@ -9,7 +9,7 @@ const OrderSuccess: React.FC = () => {
     <AuthTemplate>
       <h1 style={{ textAlign: 'center' }}>Order Successful</h1>
       <h3 style={{ textAlign: 'center' }}>Thank you for registering</h3>
-      <p style={{ textAlign: 'center' }}>Order ID: {orderId}</p>
+      {/* <p style={{ textAlign: 'center' }}>Order ID: {orderId}</p> */}
     </AuthTemplate>
   );
 };
